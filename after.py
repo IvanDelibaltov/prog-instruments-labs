@@ -4,24 +4,41 @@ import os
 
 def menu():
     options = {
-        1: {"title": "Add new customer details", "method": lambda: add_customer()},
+        1: {
+            "title": "Add new customer details", 
+            "method": lambda: add_customer()
+        },
         2: {
             "title": "Modify already existing customer details",
             "method": lambda: modify_customer(),
         },
-        3: {"title": "Search customer details", "method": lambda: search_customer()},
-        4: {"title": "View all customer details", "method": lambda: view_customers()},
-        5: {"title": "Delete customer details", "method": lambda: remove_customer()},
-        6: {"title": "Exit the program", "method": lambda: exit_program()},
+        3: {
+            "title": "Search customer details", 
+            "method": lambda: search_customer()
+        },
+        4: {
+            "title": "View all customer details", 
+            "method": lambda: view_customers()
+        },
+        5: {
+            "title": "Delete customer details", 
+            "method": lambda: remove_customer()
+        },
+        6: {
+            "title": "Exit the program", 
+            "method": lambda: exit_program()
+        },
     }
 
-    print(f"\n\n{' ' * 25}Welcome to Hotel Database Management Software\n\n")
+    welcome_message = "Welcome to Hotel Database Management Software"
+    print(f"\n\n{' ' * 25}{welcome_message}\n\n")
 
     for num, option in options.items():
         print(f"{num}: {option.get('title')}")
     print()
 
-    options.get(int(input("Enter your choice(1-6): "))).get("method")()
+    user_choice = int(input("Enter your choice(1-6): "))
+    options.get(user_choice).get("method")()
 
 
 def add_customer():
@@ -56,7 +73,7 @@ def add_customer():
     total_price_str = str(total_price)
     print("")
 
-    print("You have to pay ", (total_price_str))
+    print(f"You have to pay {total_price_str}")
     print("")
 
     payment_method = input("Mode of payment(Card/Cash/Online): ").capitalize()
@@ -82,11 +99,11 @@ def add_customer():
         room_number = 1 + last_room
         room_number = str(room_number)
 
-    print("You have been assigned Room Number", room_number)
-    print(f"name : {first_name} {last_name}")
-    print(f"phone number : +91{phone_number}")
-    print(f"Room type : {room_type_name}")
-    print(f"Stay (day) : {days_stay}")
+    print(f"You have been assigned Room Number {room_number}")
+    print(f"Name: {first_name} {last_name}")
+    print(f"Phone number: +91{phone_number}")
+    print(f"Room type: {room_type_name}")
+    print(f"Stay (days): {days_stay}")
 
     dictionary["First_Name"].append(first_name)
     dictionary["Last_Name"].append(last_name)
@@ -100,7 +117,6 @@ def add_customer():
         file.write(str(dictionary))
 
     print("\nYour data has been successfully added to our database.")
-
     exit_menu()
 
 
@@ -152,10 +168,9 @@ def modify_customer():
                 case 3:
                     category = "Phone_num"
 
-            user_input = input(f"Enter New {category.replace('_', ' ')}")
+            user_input = input(f"Enter New {category.replace('_', ' ')}: ")
             category_list = dictionary[category]
             category_list[index] = user_input
-            dictionary[category] = None
             dictionary[category] = category_list
 
             file.write(str(dictionary))
@@ -187,14 +202,16 @@ def search_customer():
         days_list = dictionary.get("Days")
         prices = dictionary.get("Price")
 
-        print(f"\nFirst Name: {first_names[index]}")
-        print(f"Last Name: {last_names[index]}")
-        print(f"Phone number: {phone_numbers[index]}")
-        print(f"Room Type: {room_types[index]}")
-        print(f"Days staying: {days_list[index]}")
-        print(f"Money paid: {prices[index]}")
-        print(f"Room Number: {room_numbers[index]}")
-
+        customer_info = f"""
+First Name: {first_names[index]}
+Last Name: {last_names[index]}
+Phone number: {phone_numbers[index]}
+Room Type: {room_types[index]}
+Days staying: {days_list[index]}
+Money paid: {prices[index]}
+Room Number: {room_numbers[index]}"""
+        
+        print(customer_info)
         exit_menu()
 
 
@@ -229,32 +246,18 @@ def remove_customer():
         del prices[index]
         del room_nums[index]
 
-        dictionary["First_Name"] = None
         dictionary["First_Name"] = first_names
-
-        dictionary["Last_Name"] = None
         dictionary["Last_Name"] = last_names
-
-        dictionary["Phone_num"] = None
         dictionary["Phone_num"] = phone_numbers
-
-        dictionary["Room_Type"] = None
         dictionary["Room_Type"] = room_types
-
-        dictionary["Days"] = None
         dictionary["Days"] = days_list
-
-        dictionary["Price"] = None
         dictionary["Price"] = prices
-
-        dictionary["Room"] = None
         dictionary["Room"] = room_nums
 
         with open("Management.txt", "w", encoding="utf-8") as file:
             file.write(str(dictionary))
 
         print("Details has been removed successfully")
-
         exit_menu()
 
 
@@ -272,8 +275,7 @@ def view_customers():
         room_numbers = dictionary["Room"]
         total_customers = len(room_numbers)
 
-        index = 0
-        while index != total_customers:
+        for index in range(total_customers):
             first_names = dictionary.get("First_Name")
             last_names = dictionary.get("Last_Name")
             phone_numbers = dictionary.get("Phone_num")
@@ -282,25 +284,24 @@ def view_customers():
             prices = dictionary.get("Price")
             room_nums = dictionary.get("Room")
 
-            print("")
-            print("First Name:", first_names[index])
-            print("Last Name:", last_names[index])
-            print("Phone number:", phone_numbers[index])
-            print("Room Type:", room_types[index])
-            print("Days staying:", days_list[index])
-            print("Money paid:", prices[index])
-            print("Room Number:", room_nums[index])
-            print("")
-
-            index = index + 1
+            customer_details = f"""
+First Name: {first_names[index]}
+Last Name: {last_names[index]}
+Phone number: {phone_numbers[index]}
+Room Type: {room_types[index]}
+Days staying: {days_list[index]}
+Money paid: {prices[index]}
+Room Number: {room_nums[index]}"""
+            
+            print(customer_details)
 
         exit_menu()
 
 
 def exit_program():
     print("")
-    print("                             Thanks for visiting")
-    print("                                 Goodbye")
+    print("Thanks for visiting")
+    print("Goodbye")
 
 
 def exit_menu():
@@ -320,4 +321,4 @@ def exit_menu():
 try:
     menu()
 except KeyboardInterrupt:
-    print("\nexiting...!")
+    print("\nExiting...!")
