@@ -320,4 +320,4 @@ def exit_menu():
 try:
     menu()
 except KeyboardInterrupt:
-    print("\nexiting...!") 
+    print("\nexiting...!")
