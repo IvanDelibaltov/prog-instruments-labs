@@ -2,30 +2,63 @@ import json
 import os
 
 
+# Константы для цен комнат
+ROOM_PRICES = {
+    1: {"name": "Normal", "price": 500},
+    2: {"name": "Deluxe", "price": 1000},
+    3: {"name": "Super Deluxe", "price": 1500},
+    4: {"name": "Premium Deluxe", "price": 2000}
+}
+
+# Константы для меню
+MAIN_MENU_OPTIONS = {
+    1: "Add new customer details",
+    2: "Modify already existing customer details",
+    3: "Search customer details",
+    4: "View all customer details",
+    5: "Delete customer details",
+    6: "Exit the program"
+}
+
+MODIFY_MENU_OPTIONS = {
+    1: "First_Name",
+    2: "Last_Name", 
+    3: "Phone_num"
+}
+
+EXIT_MENU_OPTIONS = {
+    1: "Main Menu",
+    2: "Exit"
+}
+
+DATA_FILE = "Management.txt"
+DEFAULT_FIRST_ROOM = "501"
+
+
 def menu():
     options = {
         1: {
-            "title": "Add new customer details", 
+            "title": MAIN_MENU_OPTIONS[1], 
             "method": lambda: add_customer()
         },
         2: {
-            "title": "Modify already existing customer details",
+            "title": MAIN_MENU_OPTIONS[2],
             "method": lambda: modify_customer(),
         },
         3: {
-            "title": "Search customer details", 
+            "title": MAIN_MENU_OPTIONS[3], 
             "method": lambda: search_customer()
         },
         4: {
-            "title": "View all customer details", 
+            "title": MAIN_MENU_OPTIONS[4], 
             "method": lambda: view_customers()
         },
         5: {
-            "title": "Delete customer details", 
+            "title": MAIN_MENU_OPTIONS[5], 
             "method": lambda: remove_customer()
         },
         6: {
-            "title": "Exit the program", 
+            "title": MAIN_MENU_OPTIONS[6], 
             "method": lambda: exit_program()
         },
     }
@@ -47,26 +80,18 @@ def add_customer():
     phone_number = input("\nEnter your phone number(without +91): \n")
 
     print("These are the rooms that are currently available")
-    print("1-Normal (500/Day)")
-    print("2-Deluxe (1000/Day)")
-    print("3-Super Deluxe (1500/Day)")
-    print("4-Premium Deluxe (2000/Day)")
+    for room_num, room_info in ROOM_PRICES.items():
+        print(f"{room_num}-{room_info['name']} ({room_info['price']}/Day)")
 
-    room_type = int(input("\nWhich type you want(1-4): \n"))
-
-    match room_type:
-        case 1:
-            price_per_day = 500
-            room_type_name = "Normal"
-        case 2:
-            price_per_day = 1000
-            room_type_name = "Deluxe"
-        case 3:
-            price_per_day = 1500
-            room_type_name = "Super Deluxe"
-        case 4:
-            price_per_day = 2000
-            room_type_name = "Premium Deluxe"
+    room_choice = int(input("\nWhich type you want(1-4): \n"))
+    
+    if room_choice not in ROOM_PRICES:
+        print("Invalid room type selected!")
+        return add_customer()
+    
+    room_info = ROOM_PRICES[room_choice]
+    price_per_day = room_info["price"]
+    room_type_name = room_info["name"]
 
     days_stay = int(input("How many days you will stay: "))
     total_price = price_per_day * days_stay
@@ -77,21 +102,20 @@ def add_customer():
     print("")
 
     payment_method = input("Mode of payment(Card/Cash/Online): ").capitalize()
-    if payment_method == "Card":
-        print("Payment with card")
-    elif payment_method == "Cash":
-        print("Payment with cash")
-    elif payment_method == "Online":
-        print("Online payment")
+    valid_payments = ["Card", "Cash", "Online"]
+    if payment_method in valid_payments:
+        print(f"Payment with {payment_method.lower()}")
+    else:
+        print("Invalid payment method")
     print("")
 
-    with open("Management.txt", "r") as file:
+    with open(DATA_FILE, "r") as file:
         string = file.read()
         string = string.replace("'", '"')
         dictionary = json.loads(string)
 
     if len(dictionary.get("Room")) == 0:
-        room_number = "501"
+        room_number = DEFAULT_FIRST_ROOM
     else:
         room_list = dictionary.get("Room")
         last_index = len(room_list) - 1
@@ -113,16 +137,16 @@ def add_customer():
     dictionary["Price"].append(total_price_str)
     dictionary["Room"].append(room_number)
 
-    with open("Management.txt", "w", encoding="utf-8") as file:
+    with open(DATA_FILE, "w", encoding="utf-8") as file:
         file.write(str(dictionary))
 
     print("\nYour data has been successfully added to our database.")
     exit_menu()
 
 
-file_check = os.path.isfile("Management.txt")
+file_check = os.path.isfile(DATA_FILE)
 if not file_check:
-    with open("Management.txt", "a", encoding="utf-8") as file:
+    with open(DATA_FILE, "a", encoding="utf-8") as file:
         template = {
             "First_Name": [],
             "Last_Name": [],
@@ -136,7 +160,7 @@ if not file_check:
 
 
 def modify_customer():
-    with open("Management.txt", "r") as file:
+    with open(DATA_FILE, "r") as file:
         string = file.read()
         string = string.replace("'", '"')
         dictionary = json.loads(string)
@@ -149,6 +173,10 @@ def modify_customer():
     else:
         room_number = input("\nEnter your Room Number: ")
 
+        if room_number not in room_list:
+            print("Room number not found!")
+            return modify_customer()
+
         room_list = dictionary["Room"]
         index = int(room_list.index(room_number))
 
@@ -159,15 +187,13 @@ def modify_customer():
         choice = int(input("\nEnter your choice: "))
         print()
 
-        with open("Management.txt", "w", encoding="utf-8") as file:
-            match choice:
-                case 1:
-                    category = "First_Name"
-                case 2:
-                    category = "Last_Name"
-                case 3:
-                    category = "Phone_num"
+        if choice not in MODIFY_MENU_OPTIONS:
+            print("Invalid choice!")
+            return modify_customer()
 
+        category = MODIFY_MENU_OPTIONS[choice]
+
+        with open(DATA_FILE, "w", encoding="utf-8") as file:
             user_input = input(f"Enter New {category.replace('_', ' ')}: ")
             category_list = dictionary[category]
             category_list[index] = user_input
@@ -180,7 +206,7 @@ def modify_customer():
 
 
 def search_customer():
-    with open("Management.txt") as file:
+    with open(DATA_FILE) as file:
         dictionary = json.loads(file.read().replace("'", '"'))
 
     room_list = dictionary.get("Room")
@@ -191,6 +217,10 @@ def search_customer():
         menu()
     else:
         room_number = input("\nEnter your Room Number: ")
+
+        if room_number not in room_list:
+            print("Room number not found!")
+            return search_customer()
 
         room_numbers = dictionary.get("Room")
         index = int(room_numbers.index(room_number))
@@ -216,7 +246,7 @@ Room Number: {room_numbers[index]}"""
 
 
 def remove_customer():
-    with open("Management.txt") as file:
+    with open(DATA_FILE) as file:
         dictionary = json.loads(file.read().replace("'", '"'))
 
     room_list = dictionary.get("Room")
@@ -228,6 +258,11 @@ def remove_customer():
         room_number = input("\nEnter your Room Number: ")
 
         room_numbers = dictionary["Room"]
+        
+        if room_number not in room_numbers:
+            print("Room number not found!")
+            return remove_customer()
+
         index = int(room_numbers.index(room_number))
 
         first_names = dictionary.get("First_Name")
@@ -254,7 +289,7 @@ def remove_customer():
         dictionary["Price"] = prices
         dictionary["Room"] = room_nums
 
-        with open("Management.txt", "w", encoding="utf-8") as file:
+        with open(DATA_FILE, "w", encoding="utf-8") as file:
             file.write(str(dictionary))
 
         print("Details has been removed successfully")
@@ -262,7 +297,7 @@ def remove_customer():
 
 
 def view_customers():
-    with open("Management.txt") as file:
+    with open(DATA_FILE) as file:
         dictionary = json.loads(file.read().replace("'", '"'))
 
     room_list = dictionary.get("Room")
@@ -307,8 +342,8 @@ def exit_program():
 def exit_menu():
     print("")
     print("Do you want to exit the program or return to main menu")
-    print("1-Main Menu")
-    print("2-Exit")
+    for num, option in EXIT_MENU_OPTIONS.items():
+        print(f"{num}-{option}")
     print("")
 
     user_input = int(input("Enter your choice: "))
