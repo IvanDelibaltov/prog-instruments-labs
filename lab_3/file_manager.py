@@ -1,11 +1,11 @@
 import json
+import os
 import pandas as pd
-
 from pandas import DataFrame
 
 
 def read_csv(file_path: str, encoding: str = 'utf-16', delimiter: str = ';') -> DataFrame:
-
+    """Читает CSV файл в DataFrame."""
     try:
         return pd.read_csv(file_path, encoding=encoding, delimiter=delimiter)
     except FileNotFoundError:
@@ -17,14 +17,14 @@ def read_csv(file_path: str, encoding: str = 'utf-16', delimiter: str = ';') -> 
 
 
 def read_json(file_path: str, encoding: str = 'utf-8') -> dict:
-
+    """Читает JSON файл."""
     try:
         with open(file_path, 'r', encoding=encoding) as file:
             return json.load(file)
     except FileNotFoundError:
         raise FileNotFoundError(f"JSON файл не найден: {file_path}")
     except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Ошибка декодирования JSON в файле {file_path}: {e}")
+        raise json.JSONDecodeError(f"Ошибка декодирования JSON в файле {file_path}: {e.msg}", e.doc, e.pos)
     except UnicodeDecodeError:
         raise ValueError(f"Ошибка кодировки в файле {file_path}.")
     except Exception as e:
@@ -32,12 +32,13 @@ def read_json(file_path: str, encoding: str = 'utf-8') -> dict:
 
 
 def write_json(file_path: str, data: dict, encoding: str = 'utf-8') -> None:
-
-
+    """Записывает данные в JSON файл."""
     try:
+        # Создаем директории если их нет
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, 'w', encoding=encoding) as file:
             json.dump(data, file, ensure_ascii=False, indent=2)
+    except PermissionError:
+        raise PermissionError(f"Нет прав на запись в файл: {file_path}")
     except Exception as e:
         raise Exception(f"Ошибка записи JSON файла {file_path}: {e}")
-    except FileNotFoundError as e:
-        raise Exception(f"Путь не найден: {file_path}: {e}")

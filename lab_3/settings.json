@@ -1,6 +1,6 @@
 {
-  "result" : "result.json",
-  "patterns" : "patterns.json",
-  "data" : "68.csv",
-  "var" : "68"
+  "result": "result.json",
+  "patterns": "patterns.json",
+  "data": "68.csv",
+  "var": "68"
 }
