@@ -65,6 +65,64 @@ def prediction_interval_sklearn_fixed(X, y, model, x_new, alpha=0.05):
     return y_pred, ci_lower_mean, ci_upper_mean, ci_lower_individual, ci_upper_individual
 
 
+def calculate_f_test(y, y_pred, k):
+    """Выполняет F-тест для модели"""
+    n = len(y)
+    r2 = r2_score(y, y_pred)
+
+    if r2 == 1.0:
+        return np.inf, 0.0
+
+    f_stat = (r2 / k) / ((1 - r2) / (n - k - 1))
+    f_pvalue = 1 - stats.f.cdf(f_stat, k, n - k - 1)
+
+    return f_stat, f_pvalue
+
+
+def load_and_explore_data():
+    """Загружает и анализирует данные"""
+    df = pd.read_excel('LAB_6_DATA_2025_PART_1.xlsx', sheet_name='MyList')
+    df.columns = ['Стаж', 'Образование', 'Пол', 'Зарплата']
+    data = df[['Стаж', 'Образование', 'Пол', 'Зарплата']].copy()
+    
+    print("\nРазмер данных:", data.shape)
+    print("\nПервые 5 строк:")
+    print(data.head())
+    print("\nОсновные статистики:")
+    print(data.describe())
+    
+    return data
+
+
+def create_pairplot(data):
+    """Создает pairplot для данных"""
+    sns.pairplot(data[['Зарплата', 'Стаж', 'Образование']])
+    plt.suptitle('Pair Plot: взаимосвязи между переменными', y=1.02)
+    plt.show()
+
+
+def print_header(title, width=50):
+    """Печатает заголовок раздела"""
+    print("\n" + "=" * width)
+    print(title)
+
+
+def run_simple_regression(data, Z_var, alpha):
+    """Выполняет простую регрессию"""
+    print_header("ЗАДАНИЕ 1: Оценка параметров модели Зарплата = f(Образование)")
+    X1 = data[[Z_var]]
+    y = data['Зарплата']
+
+    model1 = LinearRegression()
+    model1.fit(X1, y)
+
+    beta0_1 = model1.intercept_
+    beta1_1 = model1.coef_[0]
+    print(f"Модель 1: Зарплата = {beta0_1:.4f} + {beta1_1:.4f} × Образование")
+    
+    return model1, X1, y
+
+
 # Параметры по варианту 13
 Z_var = 'Образование'
 gamma = 0.915
@@ -82,49 +140,22 @@ print(f"Образование для прогноза (b): {b} лет")
 
 
 # Загрузка данных
-df = pd.read_excel('LAB_6_DATA_2025_PART_1.xlsx', sheet_name='MyList')
-df.columns = ['Стаж', 'Образование', 'Пол', 'Зарплата']
-data = df[['Стаж', 'Образование', 'Пол', 'Зарплата']].copy()
-print("\nРазмер данных:", data.shape)
-print("\nПервые 5 строк:")
-print(data.head())
-print("\nОсновные статистики:")
-print(data.describe())
-
-sns.pairplot(data[['Зарплата', 'Стаж', 'Образование']])
-plt.suptitle('Pair Plot: взаимосвязи между переменными', y=1.02)
-plt.show()
-
+data = load_and_explore_data()
+create_pairplot(data)
 
 # === Задание 1: Простая регрессия Зарплата = f(Образование) ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 1: Оценка параметров модели Зарплата = f(Образование)")
-X1 = data[[Z_var]]
-y = data['Зарплата']
-
-model1 = LinearRegression()
-model1.fit(X1, y)
-
-beta0_1 = model1.intercept_
-beta1_1 = model1.coef_[0]
-print(f"Модель 1: Зарплата = {beta0_1:.4f} + {beta1_1:.4f} × Образование")
+model1, X1, y = run_simple_regression(data, Z_var, alpha)
 
 
 # === Задание 2: F-тест для модели 1 ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 2: Проверка объясняющей способности модели 1 (F-тест)")
+print_header("ЗАДАНИЕ 2: Проверка объясняющей способности модели 1 (F-тест)")
 
 y_pred_1 = model1.predict(X1)
 r2_1 = r2_score(y, y_pred_1)
 
 n = len(y)
 k1 = 1
-if r2_1 == 1.0:
-    f_stat_1 = np.inf
-    f_pvalue_1 = 0.0
-else:
-    f_stat_1 = (r2_1 / k1) / ((1 - r2_1) / (n - k1 - 1))
-    f_pvalue_1 = 1 - stats.f.cdf(f_stat_1, k1, n - k1 - 1)
+f_stat_1, f_pvalue_1 = calculate_f_test(y, y_pred_1, k1)
 
 print(f"R² = {r2_1:.4f}")
 print(f"F-статистика = {f_stat_1:.4f}, p-value = {f_pvalue_1:.4e}")
@@ -138,8 +169,7 @@ else:
 
 
 # === Задание 3: Множественная регрессия ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 3: Оценка параметров модели Зарплата = f(Стаж, Образование, Пол)")
+print_header("ЗАДАНИЕ 3: Оценка параметров модели Зарплата = f(Стаж, Образование, Пол)")
 
 X2 = data[['Стаж', 'Образование', 'Пол']]
 model2 = LinearRegression()
@@ -151,19 +181,13 @@ print(f"Модель 2: Зарплата = {intercept2:.4f} + {coefs2[0]:.4f}×�
 
 
 # === Задание 4: F-тест для модели 2 ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 4: Проверка объясняющей способности модели 2 (F-тест)")
+print_header("ЗАДАНИЕ 4: Проверка объясняющей способности модели 2 (F-тест)")
 
 y_pred_2 = model2.predict(X2)
 r2_2 = r2_score(y, y_pred_2)
 
 k2 = 3
-if r2_2 == 1.0:
-    f_stat_2 = np.inf
-    f_pvalue_2 = 0.0
-else:
-    f_stat_2 = (r2_2 / k2) / ((1 - r2_2) / (n - k2 - 1))
-    f_pvalue_2 = 1 - stats.f.cdf(f_stat_2, k2, n - k2 - 1)  # ИСПРАВЛЕНО: было f_stat_1!
+f_stat_2, f_pvalue_2 = calculate_f_test(y, y_pred_2, k2)
 
 print(f"R² = {r2_2:.4f}")
 print(f"F-статистика = {f_stat_2:.4f}, p-value = {f_pvalue_2:.4e}")
@@ -186,8 +210,7 @@ coeffs, se, t_stats, p_values, ci_low, ci_up = t_test_sklearn(X2, y, model2, alp
 
 
 # === Задание 5: Гендерный эффект ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 5: Значимо ли различаются зарплаты мужчин и женщин при прочих равных?")
+print_header("ЗАДАНИЕ 5: Значимо ли различаются зарплаты мужчин и женщин при прочих равных?")
 
 p_gender = p_values[3]
 coef_gender = coeffs[3]
@@ -207,8 +230,7 @@ else:
 
 
 # === Задание 6: Стаж ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 6: Значим ли коэффициент при СТАЖЕ?")
+print_header("ЗАДАНИЕ 6: Значим ли коэффициент при СТАЖЕ?")
 
 p_stazh = p_values[1]
 coef_stazh = coeffs[1]
@@ -221,8 +243,7 @@ else:
 
 
 # === Задание 7: Образование ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 7: Значим ли коэффициент при ОБРАЗОВАНИИ?")
+print_header("ЗАДАНИЕ 7: Значим ли коэффициент при ОБРАЗОВАНИИ?")
 
 p_edu = p_values[2]
 coef_edu = coeffs[2]
@@ -235,8 +256,7 @@ else:
 
 
 # === Задание 8: Доверительные интервалы ===
-print("\n" + "="*50)
-print(f"ЗАДАНИЕ 8: Доверительные интервалы для коэффициентов (γ = {gamma})")
+print_header(f"ЗАДАНИЕ 8: Доверительные интервалы для коэффициентов (γ = {gamma})")
 
 print(f"\n{'Параметр':<18} {'Оценка':<10} {'95% ДИ':<30}")
 print("-" * 55)
@@ -246,8 +266,7 @@ for i in range(4):
 
 
 # === Задание 9: Прогноз ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 9: Прогноз зарплаты с интервалами")
+print_header("ЗАДАНИЕ 9: Прогноз зарплаты с интервалами")
 
 x_new = np.array([[a, b, gender]])
 point, ci_mean_low, ci_mean_up, ci_ind_low, ci_ind_up = prediction_interval_sklearn_fixed(X2, y, model2, x_new, alpha)
@@ -259,22 +278,19 @@ print(f"Прогнозный интервал для ИНДИВИДУАЛЬНО�
 
 
 # === Задание 10: +2 года стажа ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 10: Изменение зарплаты при +2 года стажа")
+print_header("ЗАДАНИЕ 10: Изменение зарплаты при +2 года стажа")
 delta = 2 * coeffs[1]
 print(f"ΔЗарплата = 2 × {coeffs[1]:.4f} = {delta:.2f} долл./час")
 print(f"ВЫВОД: При прочих равных зарплата увеличится в среднем на {delta:.2f} долл./час.")
 
 
 # === Задание 11: +1 год образования ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 11: Прибавка за +1 год образования")
+print_header("ЗАДАНИЕ 11: Прибавка за +1 год образования")
 print(f"Каждый дополнительный год образования даёт +{coeffs[2]:.2f} долл./час.")
 
 
 # === Задание 12: Дискриминация? ===
-print("\n" + "="*50)
-print("ЗАДАНИЕ 12: Имеет ли место гендерная дискриминация?")
+print_header("ЗАДАНИЕ 12: Имеет ли место гендерная дискриминация?")
 
 if p_gender < alpha and coef_gender < 0:
     print("ВЫВОД: Да, имеются статистически значимые признаки дискриминации против женщин.")
@@ -285,7 +301,7 @@ else:
 
 
 # === ИТОГ ===
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("ИТОГОВЫЙ ВЫВОД")
 print("-" * 60)
 print(f"• Множественная модель значима (p = {f_pvalue_2:.2e} < {alpha}) и объясняет {r2_2*100:.1f}% дисперсии.")
